@@ -45,7 +45,7 @@ def dingMsg():
     if not request.data:
         return {"ret": 500}
     data = json.loads(request.data.decode('utf-8'))
-    logger.info(f"receive dingding message: {json.dumps(data)}")
+    logger.info(f"receive dingding message: {data}")
 
     if valid_sign and not is_valid_sign(request.headers):
         logger.info(f"valid sign failed")
