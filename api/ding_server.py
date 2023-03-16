@@ -20,7 +20,7 @@ config_info = config.read_sys_config_path()
 openai.api_key = config_info.get('open-ai', 'api_key')
 openai.proxy = config_info.get('open-ai', 'proxy')
 robot_secret = config_info.get('ding-robot', 'robot_secret')
-
+valid_sign = config_info.getboolean('ding-robot', 'valid_sign')
 limiter = Limiter(
     key_func=get_remote_address,
     default_limits=[config_info.get('open-ai', 'rate_limit')],
@@ -47,8 +47,7 @@ def dingMsg():
     data = json.loads(request.data.decode('utf-8'))
     logger.info(f"receive dingding message: {data}")
 
-    valid_sign = is_valid_sign(request.headers)
-    if not valid_sign:
+    if valid_sign and not is_valid_sign(request.headers):
         logger.info(f"valid sign failed")
         return {"ret": 500}
 
