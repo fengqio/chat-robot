@@ -10,6 +10,7 @@ from flask import request, make_response, Flask
 from flask_limiter import Limiter
 from util.log import logger
 from config import config
+from flask_limiter.util import get_remote_address
 
 app = Flask(__name__)
 model_engine = "gpt-3.5-turbo"
@@ -122,5 +123,5 @@ def ratelimit_handler(e):
     logger.info(f"receive dingding message: {data}")
     if 'sessionWebhook' in data and 'senderStaffId' in data:
         send_dingding("[一团乱麻]头好痒，好像要长出脑子了", data['sessionWebhook'], data['senderStaffId'])
-    logger.info(f"ratelimit_handler error ip:{get_remote_address()} msg: {e.description}")
+    logger.info(f"ratelimit_handler error ip:{get_remote_address()}, uri:{request.path} msg: {e.description}")
     return {"ret": 429}
