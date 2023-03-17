@@ -18,12 +18,13 @@ retry_times = 2
 
 config_info = config.read_sys_config_path()
 openai.api_key = config_info.get('open-ai', 'api_key')
-openai.proxy = config_info.get('open-ai', 'proxy')
+openai.proxy = config_info.get('open-ai', 'proxy', fallback='')
+
 robot_secret = config_info.get('ding-robot', 'robot_secret')
-valid_sign = config_info.getboolean('ding-robot', 'valid_sign')
+valid_sign = config_info.getboolean('ding-robot', 'valid_sign', fallback=False)
 limiter = Limiter(
     key_func=lambda: request.path,
-    default_limits=[config_info.get('open-ai', 'rate_limit')],
+    default_limits=[config_info.get('open-ai', 'rate_limit', fallback='5 per minute')],
 )
 
 limiter.init_app(app)
