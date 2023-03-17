@@ -10,7 +10,6 @@ from flask import request, make_response, Flask
 from flask_limiter import Limiter
 from util.log import logger
 from config import config
-from flask_limiter.util import get_remote_address
 
 app = Flask(__name__)
 model_engine = "gpt-3.5-turbo"
@@ -22,7 +21,7 @@ openai.proxy = config_info.get('open-ai', 'proxy')
 robot_secret = config_info.get('ding-robot', 'robot_secret')
 valid_sign = config_info.getboolean('ding-robot', 'valid_sign')
 limiter = Limiter(
-    key_func=get_remote_address,
+    key_func=lambda: request.path,
     default_limits=[config_info.get('open-ai', 'rate_limit')],
 )
 
