@@ -8,11 +8,11 @@
 
 需要准备的：
 
- 	1. 申请一个**OpenAi API key**, 从[openai platform](https://platform.openai.com/account/api-keys) 生成
- 	2. 设置钉钉机器人
-     - 登录钉钉开放平台，创建机器人
-     - 设置钉钉机器人消息接收地址
-     - [可选] 获取钉钉机器人 AppSecret，用于校验钉钉请求
+1. 申请一个**OpenAi API key**, 从[openai platform](https://platform.openai.com/account/api-keys) 生成
+2. 设置钉钉机器人
+   - 登录钉钉开放平台，创建机器人
+   - 设置钉钉机器人消息接收地址
+   - [可选] 获取钉钉机器人 AppSecret，用于校验钉钉请求
 
 
 
