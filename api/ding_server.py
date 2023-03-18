@@ -8,17 +8,19 @@ import openai
 import requests
 from flask import request, make_response, Flask
 from flask_limiter import Limiter
+
+from api.chat_user_context import ChatUserContext, chatWithRetry
 from util.log import logger
 from config import config
 from flask_limiter.util import get_remote_address
 
 app = Flask(__name__)
-model_engine = "gpt-3.5-turbo"
-retry_times = 2
 
 config_info = config.read_sys_config_path()
 openai.api_key = config_info.get('open-ai', 'api_key')
 openai.proxy = config_info.get('open-ai', 'proxy', fallback='')
+enable_context = config_info.getboolean('open-ai', 'enable_context', fallback=False)
+chat_context_size = config_info.getint('open-ai', 'chat_context_size', fallback=0)
 
 robot_secret = config_info.get('ding-robot', 'robot_secret')
 valid_sign = config_info.getboolean('ding-robot', 'valid_sign', fallback=False)
@@ -29,6 +31,7 @@ limiter = Limiter(
 
 limiter.init_app(app)
 
+contex_dict = {}
 
 def set_headers(f):
     @wraps(f)
@@ -56,27 +59,38 @@ def dingMsg():
     webhook = data['sessionWebhook']
     senderStaffId = data['senderStaffId']
     senderNick = data['senderNick']
-    logger.info(f"senderStaffId:{senderStaffId} senderNick:{senderNick} content:{prompt}")
-    content = ''
-    for i in range(retry_times):
-        try:
-            completion = openai.ChatCompletion.create(
-                model=model_engine,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            content = completion.choices[0].message.content
-            break
-        except Exception as e:
-            logger.info(f"failed retry, msg:{e.user_message}")
-            continue
 
-    logger.info(f"receive chat-gpt response: {content}")
+    if enable_context:
+        if senderStaffId not in contex_dict:
+            context = ChatUserContext(senderStaffId, senderNick, 10)
+            contex_dict[senderStaffId] = context
+        else:
+            context = contex_dict[senderStaffId]
+        content = context.chat(prompt)
+    else:
+        content = chatWithRetry(senderNick, senderStaffId, [{"role": "user", "content": prompt}])
     if len(content) > 1:
         send_dingding(content, webhook, senderStaffId)
     return {"ret": 200}
 
 
-def send_dingding(answer, webhook, atUserIds):
+@app.route("/ding/context", methods=['post'])
+@set_headers
+def dingContextMsg():
+    data = json.loads(request.data.decode('utf-8'))
+    userId = data['userId']
+    userName = data['userName']
+    prompt = data['text']['content']
+    if userId not in contex_dict:
+        context = ChatUserContext(userId, userName, 10)
+        contex_dict[userId] = context
+    else:
+        context = contex_dict[userId]
+    answer = context.chat(prompt)
+    return {"answer": answer}
+
+
+def send_dingding(answer, webhook, at_user_ids):
     data = {
         "msgtype": "text",
         "text": {
@@ -84,7 +98,7 @@ def send_dingding(answer, webhook, atUserIds):
         },
         "at": {
             "atUserIds": [
-                atUserIds
+                at_user_ids
             ],
             "isAtAll": False
         }
@@ -106,9 +120,7 @@ def send_dingding(answer, webhook, atUserIds):
 
 
 def is_valid_sign(headers):
-    timestamp = headers.get('timestamp')
-    sign = headers.get('sign')
-    if not timestamp or not sign:
+    if not headers.get('timestamp') or not headers.get('sign'):
         return False
     secret_enc = robot_secret.encode('utf-8')
     string_to_sign = '{}\n{}'.format(headers['timestamp'], robot_secret)
