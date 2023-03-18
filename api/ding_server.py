@@ -33,6 +33,7 @@ limiter.init_app(app)
 
 contex_dict = {}
 
+
 def set_headers(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -62,7 +63,7 @@ def dingMsg():
 
     if enable_context:
         if senderStaffId not in contex_dict:
-            context = ChatUserContext(senderStaffId, senderNick, 10)
+            context = ChatUserContext(senderStaffId, senderNick, chat_context_size)
             contex_dict[senderStaffId] = context
         else:
             context = contex_dict[senderStaffId]
@@ -72,22 +73,6 @@ def dingMsg():
     if len(content) > 1:
         send_dingding(content, webhook, senderStaffId)
     return {"ret": 200}
-
-
-@app.route("/ding/context", methods=['post'])
-@set_headers
-def dingContextMsg():
-    data = json.loads(request.data.decode('utf-8'))
-    userId = data['userId']
-    userName = data['userName']
-    prompt = data['text']['content']
-    if userId not in contex_dict:
-        context = ChatUserContext(userId, userName, 10)
-        contex_dict[userId] = context
-    else:
-        context = contex_dict[userId]
-    answer = context.chat(prompt)
-    return {"answer": answer}
 
 
 def send_dingding(answer, webhook, at_user_ids):
