@@ -17,8 +17,7 @@ class ChatUserContext:
 
     def chat(self, prompt):
         self.context_list.append({"role": "user", "content": prompt})
-        length = len(self.context_list)
-        messages = self.context_list[length - self.context_size:length]
+        messages = self.context_list[-self.context_size:]
         content = chatWithRetry(self.sender_nick, self.sender_staff_id, messages)
         if len(content) > 0:
             self.context_list.append({"role": "assistant", "content": content})
