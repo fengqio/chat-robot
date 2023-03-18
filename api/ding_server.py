@@ -75,6 +75,15 @@ def dingMsg():
     return {"ret": 200}
 
 
+@app.route("/context/<string:staffId>", methods=['get'])
+@set_headers
+def getMsgHistory(staffId):
+    if staffId not in contex_dict:
+        return {"ret": 404}
+    context = contex_dict.get(staffId)
+    return str(context)
+
+
 def send_dingding(answer, webhook, at_user_ids):
     data = {
         "msgtype": "text",
