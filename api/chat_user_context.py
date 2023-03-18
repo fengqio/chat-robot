@@ -25,8 +25,9 @@ class ChatUserContext:
         return content
 
     def __str__(self):
-        return {'user_id': self.sender_staff_id, 'user_name': self.sender_nick, 'context_list': self.context_list,
-                'context_size': self.context_size}
+        return json.dumps(
+            {'user_id': self.sender_staff_id, 'user_name': self.sender_nick, 'context_list': self.context_list,
+             'context_size': self.context_size})
 
 
 def chatWithRetry(sender_nick, sender_staff_id, messages):
