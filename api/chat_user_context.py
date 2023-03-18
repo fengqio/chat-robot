@@ -21,6 +21,8 @@ class ChatUserContext:
         content = chatWithRetry(self.sender_nick, self.sender_staff_id, messages)
         if len(content) > 0:
             self.context_list.append({"role": "assistant", "content": content})
+        if len(self.context_list) >= 100:
+            self.context_list.clear()
         return content
 
     def __str__(self):
